@@ -532,7 +532,7 @@ so that Apache can see them.
 
 cd /etc/apache2/mods-available;
 
-for d in $(find /usr/local/lib/apache2/ -maxdepth 1 -type d); do
+for d in $(find /usr/local/lib/apache2/ -maxdepth 1 -type d | grep -v -e '^/usr/local/lib/apache2/$'); do
   for ext in load conf; do
     ln -s ${d}/$(basename ${d}).${ext} $(basename ${d}).${ext};
   done
@@ -617,12 +617,15 @@ We can use a simple script for that, adapted from a [[https://serverfault.com/qu
 
 function compile() {
     make > /dev/null && \
-    make install > /dev/null
+    make install > /dev/null && \
+    apxs -i -a -c ${FILE}
 }
 
 FILE="${1}"
 cd "${2}"
 LAST=$(md5sum "$FILE")
+compile
+service apache2 restart  > /dev/null 3>&1 2>&1 > /dev/null
 while true; do
   sleep 1
   NEW=$(md5sum "$FILE")
@@ -639,23 +642,33 @@ We have to run this script
 when the container starts,
 so we'll add it
 to our =rc.local= script.
+To avoid messing up file permissions in =/usr/local/lib/apache2/=, we'll use
+=run-as.sh= script. We need also to include the /service_user/ template and the
+=build-settings.sh= file.
+#+name: build-settings-1
+#+BEGIN_SRC shell
+defineEnvVar SERVICE_USER "The service user" "www-data";
+defineEnvVar SERVICE_GROUP "The service group" "www-data";
+defineEnvVar SERVICE_USER_SHELL "The shell of the service account" "/bin/bash";
+defineEnvVar SERVICE_USER_HOME "The home of the service account" "/var/www/";
+#+END_SRC
 
 #+name: rclocal-3
 #+BEGIN_SRC shell
 #!/bin/bash
 
-for d in $(find /usr/local/lib/apache2/ -maxdepth 1 -type d); do
+for d in $(find /usr/local/lib/apache2/ -maxdepth 1 -type d | grep -v -e '^/usr/local/lib/apache2/$'); do
   cd /etc/apache2/mods-available;
   for ext in load conf; do
     ln -s ${d}/$(basename ${d}).${ext} $(basename ${d}).${ext};
   done
   cd ${d};
-  for f in $(find . -maxdepth 1 -name '*.c'); do
+  for f in $(find . -maxdepth 1 -name '*.c' | grep -v '#'); do
     # We don't need the ${d} parameter
     # but it makes easier to find out
     # which folder is being monitored
     # when inspecting processes via ps -ef
-    /usr/local/bin/watch_module_changes.sh ${f} ${d} &
+    /usr/local/bin/run-as.sh -U www-data -G www-data /usr/local/lib/apache2 -- /usr/local/bin/watch_module_changes.sh ${f} ${d} &
   done
   a2enmod $(basename ${d});
 done
@@ -668,12 +681,16 @@ service apache2 restart &
 exit 0
 #+END_SRC
 
-The Dockerfile needs to include the new script.
+The Dockerfile needs to include the new script. Since all the logic to enable
+the modules is launched upon container startup, we can omit enabling our
+specific module in the Dockerfile.
 
 #+name: dockerfile-watch-module-changes
 #+BEGIN_SRC shell
 FROM pagecare/base:latest
 MAINTAINER ${MAINTAINER}
+
+@include("service_user")
 
 COPY rc.local /etc/rc.local
 COPY watch_module_changes.sh /usr/local/bin/watch_module_changes.sh
@@ -682,7 +699,8 @@ RUN \
   ${APTGET_INSTALL} -u apache2 apache2-dev apache2-utils libtool gcc && \
   ${APTGET_CLEANUP} && \
   mkdir /usr/local/lib/apache2 && \
-  chmod +x /etc/rc.local /usr/local/bin/watch_module_changes.sh
+  chmod +x /etc/rc.local /usr/local/bin/watch_module_changes.sh && \
+  chsh -s ${SERVICE_USER_SHELL} ${SERVICE_USER}
 
 WORKDIR /usr/local/lib/apache2
 VOLUME ["/var/www", "/usr/local/lib/apache2"]
@@ -698,13 +716,44 @@ we can setup [[https://nitoyon.github.io/livereloadx/][LiveReloadX]]
 to receive notifications from our =watch_module_changes.sh=,
 and refresh the page for us.
 
-We need to install the tool first.
+We need to pay attention LiveReloadX uses
+port 35729 to notify changes to the browser.
+Afterwards, we just need to call it from within our =watch_module_changes.sh=
 
-#+name: npm-install-livereloadx
+#+name: dev1.5
+#+BEGIN_SRC shell
+#!/bin/bash
+function compile() {
+  make clean > /dev/null && \
+  make install > /dev/null && \
+  apxs -i -a -c ${FILE}
+}
+
+FILE="${1}"
+cd "${2}"
+LAST=$(md5sum "$FILE")
+compile
+service apache2 restart > /dev/null 3>&1 2>&1 > /dev/null
+mkdir /tmp/livereloadx > /dev/null
+livereloadx --include 'apache2.pid' /var/run/apache2/ &
+while true; do
+  sleep 1
+  NEW=$(md5sum "$FILE")
+  if [ "$NEW" != "$LAST" ]; then
+      LAST="$NEW"
+      compile && \
+      service apache2 restart > /dev/null 3>&1 2>&1 > /dev/null && \
+      echo "Apache restarted as ${FILE} changed"
+  fi
+done
+#+END_SRC
+
+#+name: dockerfile-npm-livereloadx
 #+BEGIN_SRC shell
 FROM pagecare/base:latest
 MAINTAINER ${MAINTAINER}
 
+@include("service_user")
 @include("nodejs")
 
 COPY rc.local /etc/rc.local
@@ -715,12 +764,14 @@ RUN \
   ${APTGET_CLEANUP} && \
   mkdir /usr/local/lib/apache2 && \
   chmod +x /etc/rc.local /usr/local/bin/watch_module_changes.sh && \
+  chsh -s ${SERVICE_USER_SHELL} ${SERVICE_USER} && \
   npm install -g livereloadx
 
 WORKDIR /usr/local/lib/apache2
 VOLUME ["/var/www", "/usr/local/lib/apache2"]
 
 EXPOSE 80
+EXPOSE 35729
 #+END_SRC
 
 Then, add the [[http://download.livereload.com/2.1.0/LiveReload-2.1.0.xpi][Firefox extension]],

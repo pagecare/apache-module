@@ -1,22 +1,25 @@
 FROM pagecare/base:latest
 MAINTAINER ${MAINTAINER}
 
+@include("service_user")
+@include("nodejs")
+
 COPY rc.local /etc/rc.local
 COPY watch_module_changes.sh /usr/local/bin/watch_module_changes.sh
 
 RUN \
-  ${APTGET_INSTALL} -u apache2 apache2-dev apache2-utils gcc && \
+  ${APTGET_INSTALL} -u apache2 apache2-dev apache2-utils libtool gcc && \
   ${APTGET_CLEANUP} && \
   mkdir /usr/local/lib/apache2 && \
-  cd /etc/apache2/mods-available && \
-  ln -s /usr/local/lib/apache2/learn.conf learn.conf && \
-  echo "LoadModule learn_module /usr/local/lib/apache2/mod_learn.so" > learn.load && \
-  a2enmod learn
+  chmod +x /etc/rc.local /usr/local/bin/watch_module_changes.sh && \
+  chsh -s ${SERVICE_USER_SHELL} ${SERVICE_USER} && \
+  npm install -g livereloadx
 
 WORKDIR /usr/local/lib/apache2
 VOLUME ["/var/www", "/usr/local/lib/apache2"]
 
 EXPOSE 80
+EXPOSE 35729
 @include("copy-metadata")
 @include("symlinks")
 @include("instructions")

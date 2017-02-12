@@ -23,7 +23,7 @@ module AP_MODULE_DECLARE_DATA learn_module =
 };
 
 /* register_hooks: Adds a hook to the httpd process */
-static void register_hooks(apr_pool_t *pool) 
+static void register_hooks(apr_pool_t *pool)
 {
     /* Hook the request handler */
     ap_hook_handler(learn_handler, NULL, NULL, APR_HOOK_LAST);
@@ -41,6 +41,6 @@ static int learn_handler(request_rec *r)
     if (!r->handler || strcmp(r->handler, "learn")) return (DECLINED);
 
     // The first thing we will do is write a simple "Hello, world!" back to the client.
-    ap_rputs("Hello, world!", r);
+    ap_rputs("Hello, world! (updated 10)", r);
     return OK;
 }

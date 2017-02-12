@@ -1,0 +1,9 @@
+# service_user template
+ENV SERVICE_USER=www-data \
+    SERVICE_GROUP=www-data \
+    SERVICE_USER_SHELL=/bin/bash \
+    SERVICE_USER_HOME=/var/www/
+
+RUN (/usr/sbin/groupadd www-data 2> /dev/null || echo "Group www-data already exists") && \
+    (/usr/sbin/useradd -m -g www-data -G www-data -d /var/www/ -s /bin/bash -c "apache user" www-data 2> /dev/null || echo "User www-data already exists")
+# end of service_user template

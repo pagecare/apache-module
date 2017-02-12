@@ -1,1 +1,1 @@
-LoadModule learn_module /usr/lib/apache2/modules/mod_learn.so
+LoadModule learn_module /usr/local/lib/apache2/learn/mod_learn.so

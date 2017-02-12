@@ -1,0 +1,11 @@
+# v nodejs
+# From https://github.com/nodejs/node-v0.x-archive/wiki/Installing-Node.js-via-package-manager#debian-and-ubuntu-based-linux-distributions
+RUN curl --silent --location https://deb.nodesource.com/setup_6.x | bash - && \
+    /usr/local/bin/aptget-install.sh -vv  nodejs build-essential libfontconfig1 && \
+    AUX="inherits uncss json5 eslint livereloadx" && if [ -n "${AUX}" ]; then \
+      for p in inherits uncss json5 eslint livereloadx; do \
+        npm install -g ${p}; \
+      done; \
+    fi && \
+    /usr/local/bin/aptget-cleanup.sh -v
+# ^ nodejs
