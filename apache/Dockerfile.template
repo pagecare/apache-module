@@ -1,6 +1,8 @@
 FROM pagecare/base:latest
 MAINTAINER ${MAINTAINER}
 
+COPY rc.local /etc/rc.local
+
 RUN \
   ${APTGET_INSTALL} -u apache2 apache2-dev apache2-utils && \
   ${APTGET_CLEANUP} && \
