@@ -50,7 +50,7 @@ Docker image to develop PageCare's Apache module.
 
 Building it is simple as well:
 
-#+BEGIN_SRC
+#+BEGIN_SRC name=dev1.1
 ./build.sh apache
 #+END_SRC
 
