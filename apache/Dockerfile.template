@@ -2,11 +2,18 @@ FROM pagecare/base:latest
 MAINTAINER ${MAINTAINER}
 
 RUN \
-  ${APTGET_INSTALL} -u apache && \
-  ${APTGET_CLEANUP}
+  ${APTGET_INSTALL} -u apache2 apache2-dev apache2-utils && \
+  ${APTGET_CLEANUP} && \
+  mkdir /usr/local/lib/apache2 && \
+  cd /etc/apache2/mods-available && \
+  ln -s /usr/local/lib/apache2/learn.conf learn.conf && \
+  echo "LoadModule learn_module /usr/local/lib/apache2/mod_learn.so" > learn.load && \
+  a2enmod learn
 
-VOLUME [ "/var/www", "/usr/local/src/pagecare" ]
+VOLUME ["/var/www", "/usr/local/lib/apache2"]
+
 EXPOSE 80
 @include("copy-metadata")
 @include("symlinks")
 @include("instructions")
+

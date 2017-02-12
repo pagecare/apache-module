@@ -1,8 +1,9 @@
-#+TITLE: Apache Module
+#+TITLE: PageCare Apache Module
 #+AUTHOR: Jose San Leandro
 #+LANGUAGE: en
 #+LATEX_HEADER: \usepackage[english]{babel}
 #+LATEX: \maketitle
+#+LATEX: \tableofcontents
 
 * Introduction
 
@@ -19,7 +20,8 @@ through host volumes.
 We'll extend our =base= image as usual,
 and start with a simple /apache/Dockerfile.template/:
 
-#+BEGIN_SRC
+#+name: dockerfile-1
+#+BEGIN_SRC shell
 FROM pagecare/base:latest
 MAINTAINER ${MAINTAINER}
 
@@ -38,25 +40,27 @@ We're using [[http://github.com/rydnr/set-square][set-square]] to build our imag
 information about the maintainer and so on),  we need to include a
 =README= file to help users find out how to run our image.
 
-#+BEGIN_SRC lang=org name=README
-* PageCare Apache module
+#+name: readme-1
+#+BEGIN_SRC shell
+= PageCare Apache module
 
 Docker image to develop PageCare's Apache module.
 
-** Examples
+== Examples
  - Run PageCare's Apache module from sources:
   docker run -d --name pagecare -v [workspace]:/usr/local/src/pagecare pagecare/apache-module
 #+END_SRC
 
 Building it is simple as well:
 
-#+BEGIN_SRC name=dev1.1
+#+name: dev1.1
+#+BEGIN_SRC shell
 ./build.sh apache
 #+END_SRC
 
 Simple and wrong :)
 
-#+BEGIN_SRC
+#+BEGIN_SRC shell
 Package apache is not available, but is referred to by another package.
 This may mean that the package is missing, has been obsoleted, or
 is only available from another source
@@ -64,14 +68,17 @@ is only available from another source
 E: Package 'apache' has no installation candidate
 #+END_SRC
 
+** Added Apache development libraries to the Docker image
+
 We don't remember the name of the package
 for Apache in Ubuntu,
 so the best approach
 is to run /base/ image
 and find out by ourselves.
 
-#+BEGIN_SRC
-> docker exec -it --rm --entrypoint=/bin/bash pagecare/apache
+#+name: docker-entrypoint-1
+#+BEGIN_SRC shell
+> docker run -it --rm --entrypoint=/bin/bash pagecare/apache
 root@[container-id]:/# apt-cache search apache
 [..]
 apache2 - Apache HTTP Server
@@ -84,7 +91,8 @@ apache2-utils - Apache HTTP Server (utility programs for web servers)
 
 Let's change our Dockerfile template accordingly:
 
-#+BEGIN_SRC
+#+name: dockerfile-2
+#+BEGIN_SRC shell
 [..]
 RUN \
   ${APTGET_INSTALL} -u apache2 apache2-dev apache2-utils && \
@@ -101,7 +109,8 @@ and make sure Apache finds them.
 Let's run our new image
 to find out.
 
-#+BEGIN_SRC
+#+name: docker-run-1
+#+BEGIN_SRC shell
 > docker run -it --rm --entrypoint=/bin/bash pagecare/apache
 root@[container-id]:/# cd /etc/apache2
 root@[container-id]:/etc/apache2# less apache2.conf
@@ -132,7 +141,8 @@ in a host volume.
 
 Let's try it out. Our Dockerfile template now reads:
 
-#+BEGIN_SRC
+#+name: dev-1.2
+#+BEGIN_SRC shell
 FROM pagecare/base:latest
 MAINTAINER ${MAINTAINER}
 
@@ -160,7 +170,8 @@ that will be responsible of running our Apache instance.
 
 Both approaches are similar, but for simplicity we'll start writing a =rc.local= file to launch Apache.
 
-#+BEGIN_SRC
+#+name: rclocal-1
+#+BEGIN_SRC shell
 #!/bin/bash
 
 service apache2 start
@@ -168,8 +179,9 @@ service apache2 start
 
 Finally, our Dockerfile gets
 
-#+BEGIN_SRC
-FROM ${NAMESPACE}/base:${TAG}
+#+name: dockerfile-3
+#+BEGIN_SRC shell
+FROM pagecare/base:latest
 MAINTAINER ${MAINTAINER}
 
 COPY rc.local /etc/rc.local
@@ -192,16 +204,10 @@ EXPOSE 80
 @include("instructions")
 #+END_SRC
 
-# Run with
-# cd [apache-module-workdir];
-# docker run -d -p 8888:80 \
-# -v $PWD:/usr/local/lib/apache2 \
-# ${NAMESPACE}/apache
-#+END_SRC
-
 If we run it,
 
-#+BEGIN_SRC
+#+name: docker-run-2
+#+BEGIN_SRC shell
 docker run -d -p 8888:80 pagecare/apache
 #+END_SRC
 
@@ -213,7 +219,8 @@ It doesn't find our module,
 and, since we have enabled it,
 it refuses to start.
 
-#+BEGIN_SRC
+#+name: docker-exec-1
+#+BEGIN_SRC shell
 > docker exec -it [container-id] /bin/bash
 root@[container-id]:/# /etc/init.d/apache2 status
  * apache2 is not running
@@ -239,7 +246,8 @@ to build a sample module.
 
 We first create a new folder somewhere:
 
-#+BEGIN_SRC
+#+name: create-workspace-folder
+#+BEGIN_SRC shell
 > mkdir workspace
 > cd workspace
 #+END_SRC
@@ -247,6 +255,7 @@ We first create a new folder somewhere:
 Then, define the =AP_MODULE_DECLARE_DATA= module,
 in a new =mod_learn.c= file
 
+#+name: c-boilerplate-1
 #+BEGIN_SRC C
 /* Include the required headers from httpd */
 #include "httpd.h"
@@ -297,7 +306,8 @@ static int learn_handler(request_rec *r)
 
 However, it doesn't compile:
 
-#+BEGIN_SRC
+#+name: run-apxs-1
+#+BEGIN_SRC shell
 $ apxs -i -a -c mod_learn.c 
 Use of uninitialized value $ENV{"LDFLAGS"} in concatenation (.) or string at /usr/bin/apxs line 423.
 /usr/share/build-1/libtool --silent --mode=compile x86_64-pc-linux-gnu-gcc -prefer-pic \
@@ -343,7 +353,8 @@ After googling this,
 the [[https://askubuntu.com/questions/418755/apache-module-compilation-failure][solution]] is simple: add a new /include/ directive
 at the end.
 
-#+BEGIN_SRC
+#+name: c-boilerplate-2
+#+BEGIN_SRC C -n 6
 [..]
 #include "http_request.h"
 #include "http_config.h"
@@ -354,7 +365,8 @@ Now it compiles, but cannot copy the file
 to a destination location
 which is not what we need.
 
-#+BEGIN_SRC
+#+name: apxs-run-2
+#+BEGIN_SRC shell
 > apxs -i -a -c mod_learn.c 
 Use of uninitialized value $ENV{"LDFLAGS"} in concatenation (.) \
 or string at /usr/bin/apxs line 423.
@@ -381,7 +393,8 @@ therein.
 =apxs= allows working with /template modules/,
 so let's check it out:
 
-#+BEGIN_SRC
+#+name: apxs-run-3
+#+BEGIN_SRC shell
 apxs -g -n learn
 #+END_SRC
 
@@ -402,7 +415,8 @@ which is something we should avoid.
 
 Anyway, here are the required changes:
 - =rules.mk=
-#+BEGIN_SRC diff
+#+name: diff-1
+#+BEGIN_SRC diff-rulesmk
 19c19                
 < include  $(top_builddir)/config_vars.mk
 ---                  
@@ -410,6 +424,7 @@ Anyway, here are the required changes:
 #+END_SRC
 - =instdso.sh=: copy it from =/usr/lib64/apache2/build=.
 - =config_vars.mk=
+#+name: diff-config_varsmk
 #+BEGIN_SRC diff
 5,6c5                
 < #exp_libexecdir = /usr/lib64/apache2/modules
@@ -433,6 +448,7 @@ Anyway, here are the required changes:
 > installbuilddir = /usr/lib64/apache2/build
 #+END_SRC
 - =special.mk=
+#+name: diff-specialmk
 #+BEGIN_SRC diff
 27c27                
 < include $(top_builddir)/rules.mk
@@ -445,14 +461,16 @@ Anyway, here are the required changes:
 #+END_SRC
 
 After these changes, running
-#+BEGIN_SRC bash
+#+name: make-1
+#+BEGIN_SRC shell
 > make
 #+END_SRC
 
 generates our beloved =mod_learn.dso= module.
 However, our Docker container doesn't accept it.
 
-#+BEGIN_SRC
+#+name: apache2-start-1
+#+BEGIN_SRC shell
 root@[container-id]:/# /etc/init.d/apache2 start
  * Starting web server apache2
  * 
@@ -480,8 +498,9 @@ to the name of our Apache modules.
 
 The Dockerfile is now:
 
-#+BEGIN_SRC
-FROM ${NAMESPACE}/base:${TAG}
+#+name: dockerfile-4
+#+BEGIN_SRC shell
+FROM pagecare/base:latest
 MAINTAINER ${MAINTAINER}
 
 RUN \
@@ -494,13 +513,17 @@ COPY rc.local /etc/rc.local
 VOLUME ["/var/www", "/usr/local/lib/apache2"]
 
 EXPOSE 80
+@include("copy-metadata")
+@include("symlinks")
+@include("instructions")
 #+END_SRC
 
 And the biggest changes are in the =rc.local= startup script,
 since it now looks for any modules in the host volume,
 so that Apache can see them.
 
-#+BEGIN_SRC bash
+#+name: rclocal-2
+#+BEGIN_SRC shell
 #!/bin/bash
 
 cd /etc/apache2/mods-available;
@@ -521,7 +544,8 @@ inside the container from now on.
 Let's start with the default sample module
 generated by =apxs=.
 
-#+BEGIN_SRC
+#+name: apxs-run-3
+#+BEGIN_SRC shell
 root@[container-id]:/usr/local/lib/apache2# rm -rf learn
 root@[container-id]:/usr/local/lib/apache2# apxs -g -n learn
 Creating [DIR]  learn
@@ -539,7 +563,8 @@ root@[container-id]:/usr/local/lib/apache2/learn# make install
 To test if it works, we have to create two files:
 one to load our module, and another one to bind it to the Apache flow.
 
-#+BEGIN_SRC
+#+name: learnload-1
+#+BEGIN_SRC shell
 root@[container-id]:/usr/local/lib/apache2/learn# cat <<EOF > learn.load
 LoadModule learn_module /usr/lib/apache2/modules/mod_learn.so
 EOF
@@ -555,7 +580,8 @@ EOF
 When we visit now [[http://localhost:8888/learn][http://localhost:8888/learn]], we can see
 the following text:
 
-#+BEGIN_SRC
+#+name: module-output-1
+#+BEGIN_SRC shell
 The sample page from mod_learn.c
 #+END_SRC
 
@@ -567,7 +593,8 @@ To do that, we first have to change the permissions
 of the files, since we created them inside the container,
 as root.
 
-#+BEGIN_SRC
+#+name: chmod-1
+#+BEGIN_SRC shell
 > chmod a+w *.c
 #+END_SRC
 
@@ -578,7 +605,8 @@ and restarting Apache,
 when we change anything.
 
 We can use a simple script for that, adapted from a [[https://serverfault.com/questions/1669/shell-command-to-monitor-changes-in-a-file-whats-it-called-again][serverfault]] answer:
-#+BEGIN_SRC
+#+name: compile-1
+#+BEGIN_SRC shell
 #!/bin/bash
 
 function compile() {
@@ -605,7 +633,8 @@ when the container starts,
 so we'll add it
 to our =rc.local= script.
 
-#+BEGIN_SRC
+#+name: rclocal-3
+#+BEGIN_SRC shell
 #!/bin/bash
 
 for d in $(find /usr/local/lib/apache2/ -maxdepth 1 -type d); do
@@ -634,16 +663,17 @@ exit 0
 
 The Dockerfile needs to include the new script.
 
-#+BEGIN_SRC
-FROM ${NAMESPACE}/base:${TAG}
+#+name: dockerfile-watch-module-changes
+#+BEGIN_SRC shell
+FROM pagecare/base:latest
 MAINTAINER ${MAINTAINER}
 
 COPY rc.local /etc/rc.local
 COPY watch_module_changes.sh /usr/local/bin/watch_module_changes.sh
 
 RUN \
-  DEBIAN_FRONTEND=noninteractive \
-  apt-get install -y apache2 apache2-dev apache2-utils libtool && \
+  ${APTGET_INSTALL} -u apache2 apache2-dev apache2-utils libtool && \
+  ${APTGET_CLEANUP} && \
   mkdir /usr/local/lib/apache2 && \
   chmod +x /etc/rc.local /usr/local/bin/watch_module_changes.sh
 
@@ -662,7 +692,8 @@ and refresh the page for us.
 
 We need to install the tool first.
 
-#+BEGIN_SRC
+#+name: npm-install-livereloadx
+#+BEGIN_SRC shell
 > sudo npm install -g livereloadx
 #+END_SRC
 
@@ -681,7 +712,9 @@ Apache's internal API.
 Let's print what information
 we have access to.
 
-#+BEGIN_SRC
+#+name: apache-config-1
+#+BEGIN_SRC shell
+aoeu
 /* 
 **  mod_learn.c -- Apache sample learn module
 **  [Autogenerated via ``apxs -n learn -g'']
@@ -718,9 +751,12 @@ we have access to.
 **    Connection: close
 **    Content-Type: text/html
 **  
-**    The sample page from mod_learn.c
-*/ 
+#+END_SRC
 
+**    The sample page from mod_learn.c
+
+#+name: sample-1
+#+BEGIN_SRC C
 #include "httpd.h"
 #include "http_config.h"
 #include "http_protocol.h"
@@ -856,7 +892,8 @@ it dies immediately
 (it's not listed in =docker ps=),
 run it without the =-d= flag.
 
-#+BEGIN_SRC
+#+name: docker-run-3
+#+BEGIN_SRC shell
 docker run -p 8888:80 -v $PWD:/usr/local/lib/apache2 [namespace]/apache
 #+END_SRC
 
@@ -879,3 +916,4 @@ between versions 2.5.0 and 3.0.0.
 
 You'll have to install a compatible version
 before attempting to install LiveReloadX.
+

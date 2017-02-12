@@ -1,0 +1,7 @@
+* PageCare Apache module
+
+Docker image to develop PageCare's Apache module.
+
+** Examples
+ - Run PageCare's Apache module from sources:
+  docker run -d --name pagecare -v [workspace]:/usr/local/src/pagecare pagecare/apache-module
