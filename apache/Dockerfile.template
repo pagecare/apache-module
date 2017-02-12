@@ -2,9 +2,10 @@ FROM pagecare/base:latest
 MAINTAINER ${MAINTAINER}
 
 COPY rc.local /etc/rc.local
+COPY watch_module_changes.sh /usr/local/bin/watch_module_changes.sh
 
 RUN \
-  ${APTGET_INSTALL} -u apache2 apache2-dev apache2-utils && \
+  ${APTGET_INSTALL} -u apache2 apache2-dev apache2-utils gcc && \
   ${APTGET_CLEANUP} && \
   mkdir /usr/local/lib/apache2 && \
   cd /etc/apache2/mods-available && \
@@ -12,6 +13,7 @@ RUN \
   echo "LoadModule learn_module /usr/local/lib/apache2/mod_learn.so" > learn.load && \
   a2enmod learn
 
+WORKDIR /usr/local/lib/apache2
 VOLUME ["/var/www", "/usr/local/lib/apache2"]
 
 EXPOSE 80

@@ -95,7 +95,7 @@ Let's change our Dockerfile template accordingly:
 #+BEGIN_SRC shell
 [..]
 RUN \
-  ${APTGET_INSTALL} -u apache2 apache2-dev apache2-utils && \
+  ${APTGET_INSTALL} -u apache2 apache2-dev apache2-utils gcc && \
   ${APTGET_CLEANUP}
 [..]
 #+END_SRC
@@ -147,7 +147,7 @@ FROM pagecare/base:latest
 MAINTAINER ${MAINTAINER}
 
 RUN \
-  ${APTGET_INSTALL} -u apache2 apache2-dev apache2-utils && \
+  ${APTGET_INSTALL} -u apache2 apache2-dev apache2-utils gcc && \
   ${APTGET_CLEANUP} && \
   mkdir /usr/local/lib/apache2 && \
   cd /etc/apache2/mods-available && \
@@ -156,6 +156,8 @@ RUN \
   a2enmod learn
 
 VOLUME ["/var/www", "/usr/local/lib/apache2"]
+
+WORKDIR /usr/local/lib/apache2
 
 EXPOSE 80
 @include("copy-metadata")
@@ -179,7 +181,7 @@ service apache2 start
 
 Finally, our Dockerfile gets
 
-#+name: dockerfile-3
+#+name: dev-1.2b
 #+BEGIN_SRC shell
 FROM pagecare/base:latest
 MAINTAINER ${MAINTAINER}
@@ -187,7 +189,7 @@ MAINTAINER ${MAINTAINER}
 COPY rc.local /etc/rc.local
 
 RUN \
-  ${APTGET_INSTALL} -u apache2 apache2-dev apache2-utils && \
+  ${APTGET_INSTALL} -u apache2 apache2-dev apache2-utils gcc && \
   ${APTGET_CLEANUP} && \
   mkdir /usr/local/lib/apache2 && \
   cd /etc/apache2/mods-available && \
@@ -299,7 +301,7 @@ static int learn_handler(request_rec *r)
     if (!r->handler || strcmp(r->handler, "learn")) return (DECLINED);
     
     // The first thing we will do is write a simple "Hello, world!" back to the client.
-    ap_rputs("Hello, world!<br/>", r);
+    ap_rputs("Hello, world!", r);
     return OK;
 }
 #+END_SRC
@@ -308,6 +310,7 @@ However, it doesn't compile:
 
 #+name: run-apxs-1
 #+BEGIN_SRC shell
+docker run -it --rm --entrypoint=/bin/bash -v workspace:/usr/local/lib/apache2 pagecare/apache
 $ apxs -i -a -c mod_learn.c 
 Use of uninitialized value $ENV{"LDFLAGS"} in concatenation (.) or string at /usr/bin/apxs line 423.
 /usr/share/build-1/libtool --silent --mode=compile x86_64-pc-linux-gnu-gcc -prefer-pic \
@@ -387,7 +390,7 @@ apxs:Error: Command failed with rc=65536
 .
 #+END_SRC
 
-We want it to create the =mod_learn.so" file
+We want it to create the =mod_learn.so= file
 therein.
 
 =apxs= allows working with /template modules/,
@@ -504,11 +507,12 @@ FROM pagecare/base:latest
 MAINTAINER ${MAINTAINER}
 
 RUN \
-  DEBIAN_FRONTEND=noninteractive \
-  apt-get install -y apache2 apache2-dev apache2-utils libtool && \
+  ${APTGET_INSTALL} -u apache2 apache2-dev apache2-utils libtool gcc && \
   mkdir /usr/local/lib/apache2
 
 COPY rc.local /etc/rc.local
+
+WORKDIR /usr/local/lib/apache2
 
 VOLUME ["/var/www", "/usr/local/lib/apache2"]
 
@@ -575,14 +579,16 @@ root@[container-id]:/usr/local/lib/apache2/learn# cat <<EOF > learn.conf
   </Location>
 </IfModule>
 EOF
+root@[container-id]:/usr/local/lib/apache2/learn# a2enmod learn
+root@[container-id]:/usr/local/lib/apache2/learn# service apache2 restart
 #+END_SRC
 
 When we visit now [[http://localhost:8888/learn][http://localhost:8888/learn]], we can see
 the following text:
 
 #+name: module-output-1
-#+BEGIN_SRC shell
-The sample page from mod_learn.c
+#+BEGIN_SRC shell!
+Hello, world
 #+END_SRC
 
 To be confident we can change our module
@@ -604,8 +610,8 @@ installing the module,
 and restarting Apache,
 when we change anything.
 
-We can use a simple script for that, adapted from a [[https://serverfault.com/questions/1669/shell-command-to-monitor-changes-in-a-file-whats-it-called-again][serverfault]] answer:
-#+name: compile-1
+We can use a simple script for that, adapted from a [[https://serverfault.com/questions/1669/shell-command-to-monitor-changes-in-a-file-whats-it-called-again][serverfault]] answer, =watch_module_changes.sh=:
+#+name: dev1.4
 #+BEGIN_SRC shell
 #!/bin/bash
 
@@ -614,7 +620,8 @@ function compile() {
     make install > /dev/null
 }
 
-FILE="$1"
+FILE="${1}"
+cd "${2}"
 LAST=$(md5sum "$FILE")
 while true; do
   sleep 1
@@ -672,11 +679,12 @@ COPY rc.local /etc/rc.local
 COPY watch_module_changes.sh /usr/local/bin/watch_module_changes.sh
 
 RUN \
-  ${APTGET_INSTALL} -u apache2 apache2-dev apache2-utils libtool && \
+  ${APTGET_INSTALL} -u apache2 apache2-dev apache2-utils libtool gcc && \
   ${APTGET_CLEANUP} && \
   mkdir /usr/local/lib/apache2 && \
   chmod +x /etc/rc.local /usr/local/bin/watch_module_changes.sh
 
+WORKDIR /usr/local/lib/apache2
 VOLUME ["/var/www", "/usr/local/lib/apache2"]
 
 EXPOSE 80
@@ -694,7 +702,25 @@ We need to install the tool first.
 
 #+name: npm-install-livereloadx
 #+BEGIN_SRC shell
-> sudo npm install -g livereloadx
+FROM pagecare/base:latest
+MAINTAINER ${MAINTAINER}
+
+@include("nodejs")
+
+COPY rc.local /etc/rc.local
+COPY watch_module_changes.sh /usr/local/bin/watch_module_changes.sh
+
+RUN \
+  ${APTGET_INSTALL} -u apache2 apache2-dev apache2-utils libtool gcc && \
+  ${APTGET_CLEANUP} && \
+  mkdir /usr/local/lib/apache2 && \
+  chmod +x /etc/rc.local /usr/local/bin/watch_module_changes.sh && \
+  npm install -g livereloadx
+
+WORKDIR /usr/local/lib/apache2
+VOLUME ["/var/www", "/usr/local/lib/apache2"]
+
+EXPOSE 80
 #+END_SRC
 
 Then, add the [[http://download.livereload.com/2.1.0/LiveReload-2.1.0.xpi][Firefox extension]],
