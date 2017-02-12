@@ -1,0 +1,12 @@
+FROM pagecare/base:latest
+MAINTAINER ${MAINTAINER}
+
+RUN \
+  ${APTGET_INSTALL} -u apache && \
+  ${APTGET_CLEANUP}
+
+VOLUME [ "/var/www", "/usr/local/src/pagecare" ]
+EXPOSE 80
+@include("copy-metadata")
+@include("symlinks")
+@include("instructions")

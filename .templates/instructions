@@ -1,0 +1,164 @@
+# instructions template
+
+# For instructions on how to use this image, please run
+# docker run -it pagecare/apache:201702 help
+
+# Environment variables used when building this image:
+ENV SQ_AUTHOR_DESCRIPTION="The author of the image(s) to build" \
+    SQ_AUTHOR_DEFAULT="me" \
+    SQ_AUTHOR_DEFAULT="me" \
+    SQ_AUTHOR="pagecare" \
+    SQ_DOMAIN_DESCRIPTION="The domain" \
+    SQ_DOMAIN_DEFAULT="example.com" \
+    SQ_DOMAIN_DEFAULT="example.com" \
+    SQ_DOMAIN="page.care" \
+    SQ_AUTHOR_EMAIL_DESCRIPTION="The author's email" \
+    SQ_AUTHOR_EMAIL_DEFAULT="me@page.care" \
+    SQ_AUTHOR_EMAIL_DEFAULT="me@page.care" \
+    SQ_AUTHOR_EMAIL="pagecare@acm-sl.org" \
+    SQ_NAMESPACE_DESCRIPTION="The docker registry's namespace" \
+    SQ_NAMESPACE_DEFAULT="example" \
+    SQ_NAMESPACE_DEFAULT="example" \
+    SQ_NAMESPACE="pagecare" \
+    SQ_DATE_DESCRIPTION="The date format used to tag images" \
+    SQ_DATE_DEFAULT="201702" \
+    SQ_DATE_DEFAULT="201702" \
+    SQ_DATE="201702" \
+    SQ_TIME_DESCRIPTION="A timestamp" \
+    SQ_TIME_DEFAULT="Sun Feb 12 08:40:06 CET 2017" \
+    SQ_TIME_DEFAULT="Sun Feb 12 08:40:06 CET 2017" \
+    SQ_TIME="Sun Feb 12 08:40:06 CET 2017" \
+    SQ_REGISTRY_DESCRIPTION="The registry to push Docker images to" \
+    SQ_REGISTRY_DEFAULT="tutum.co" \
+    SQ_REGISTRY_DEFAULT="tutum.co" \
+    SQ_REGISTRY="nexus.acm-sl.org" \
+    SQ_REGISTRY_NAMESPACE_DESCRIPTION="The namespace under the registry where the image is to be uploaded" \
+    SQ_REGISTRY_NAMESPACE_DEFAULT="pagecare" \
+    SQ_REGISTRY_NAMESPACE_DEFAULT="pagecare" \
+    SQ_REGISTRY_NAMESPACE="pagecare" \
+    SQ_ROOT_IMAGE_VERSION_DESCRIPTION="The root image version" \
+    SQ_ROOT_IMAGE_VERSION_DEFAULT="0.9.19" \
+    SQ_ROOT_IMAGE_VERSION_DEFAULT="0.9.19" \
+    SQ_ROOT_IMAGE_VERSION="0.9.19" \
+    SQ_ROOT_IMAGE_64BIT_DESCRIPTION="The default root image for 64 bits" \
+    SQ_ROOT_IMAGE_64BIT_DEFAULT="phusion/baseimage" \
+    SQ_ROOT_IMAGE_64BIT_DEFAULT="phusion/baseimage" \
+    SQ_ROOT_IMAGE_64BIT="phusion/baseimage" \
+    SQ_RANDOM_PASSWORD_DESCRIPTION="A random password" \
+    SQ_RANDOM_PASSWORD_DEFAULT="secret" \
+    SQ_RANDOM_PASSWORD_DEFAULT="secret" \
+    SQ_RANDOM_PASSWORD="secret" \
+    SQ_ROOT_IMAGE_32BIT_DESCRIPTION="The default root image for 32 bits" \
+    SQ_ROOT_IMAGE_32BIT_DEFAULT="phusion/baseimage32" \
+    SQ_ROOT_IMAGE_32BIT_DEFAULT="phusion/baseimage32" \
+    SQ_ROOT_IMAGE_32BIT="phusion/baseimage32" \
+    SQ_BASE_IMAGE_64BIT_DESCRIPTION="The base image for 64 bits" \
+    SQ_BASE_IMAGE_64BIT_DEFAULT="pagecare/base" \
+    SQ_BASE_IMAGE_64BIT_DEFAULT="pagecare/base" \
+    SQ_BASE_IMAGE_64BIT="pagecare/base" \
+    SQ_BASE_IMAGE_32BIT_DESCRIPTION="The base image for 32 bits" \
+    SQ_BASE_IMAGE_32BIT_DEFAULT="pagecare/base32" \
+    SQ_BASE_IMAGE_32BIT_DEFAULT="pagecare/base32" \
+    SQ_BASE_IMAGE_32BIT="pagecare/base32" \
+    SQ_SMTP_HOST_DESCRIPTION="The SMTP host to send emails, including monit's" \
+    SQ_SMTP_HOST_DEFAULT="mail.page.care" \
+    SQ_SMTP_HOST_DEFAULT="mail.page.care" \
+    SQ_SMTP_HOST="mail.page.care" \
+    SQ_LDAP_HOST_DESCRIPTION="The LDAP host to authorize and/or authenticate users" \
+    SQ_LDAP_HOST_DEFAULT="ldap.page.care" \
+    SQ_LDAP_HOST_DEFAULT="ldap.page.care" \
+    SQ_LDAP_HOST="ldap.page.care" \
+    SQ_SSHPORTS_FILE_DESCRIPTION="The file with the SSH port mappings" \
+    SQ_SSHPORTS_FILE_DEFAULT="sshports.txt" \
+    SQ_SSHPORTS_FILE_DEFAULT="sshports.txt" \
+    SQ_SSHPORTS_FILE="sshports.txt" \
+    SQ_INCLUDES_FOLDER_DESCRIPTION="The folder where 'include' files are located" \
+    SQ_INCLUDES_FOLDER_DEFAULT="./.templates" \
+    SQ_INCLUDES_FOLDER_DEFAULT="./.templates" \
+    SQ_INCLUDES_FOLDER="./.templates" \
+    SQ_COPYRIGHT_PREAMBLE_FILE_DESCRIPTION="The file with the copyright preamble" \
+    SQ_COPYRIGHT_PREAMBLE_FILE_DEFAULT="copyright-preamble.txt" \
+    SQ_COPYRIGHT_PREAMBLE_FILE_DEFAULT="copyright-preamble.txt" \
+    SQ_COPYRIGHT_PREAMBLE_FILE="copyright-preamble.txt" \
+    SQ_LICENSE_FILE_DESCRIPTION="The file with the license details" \
+    SQ_LICENSE_FILE_DEFAULT="LICENSE" \
+    SQ_LICENSE_FILE_DEFAULT="LICENSE" \
+    SQ_LICENSE_FILE="LICENSE" \
+    SQ_BUILDER_DESCRIPTION="The builder of the image" \
+    SQ_BUILDER_DEFAULT="pagecare" \
+    SQ_BUILDER_DEFAULT="pagecare" \
+    SQ_BUILDER="pagecare" \
+    SQ_HOST_VOLUMES_ROOT_FOLDER_DESCRIPTION="The root folder for host volumes" \
+    SQ_HOST_VOLUMES_ROOT_FOLDER_DEFAULT="/var/lib/docker/data" \
+    SQ_HOST_VOLUMES_ROOT_FOLDER_DEFAULT="/var/lib/docker/data" \
+    SQ_HOST_VOLUMES_ROOT_FOLDER="/var/lib/docker/data" \
+    SQ_DEVELOPMENT_USER_ID_DESCRIPTION="The user id used when developing code (to match host user id)" \
+    SQ_DEVELOPMENT_USER_ID_DEFAULT="1000" \
+    SQ_DEVELOPMENT_USER_ID_DEFAULT="1000" \
+    SQ_DEVELOPMENT_USER_ID="1000" \
+    SQ_DOCKER_OPTS_DESCRIPTION="Generic Docker options" \
+    SQ_DOCKER_TAG_OPTS_DESCRIPTION="Docker tag options" \
+    SQ_DOCKER_BUILD_DESCRIPTION="The docker build command" \
+    SQ_DOCKER_BUILD_DEFAULT="docker build" \
+    SQ_DOCKER_BUILD_DEFAULT="docker build" \
+    SQ_DOCKER_BUILD="docker build" \
+    SQ_DOCKER_BUILD_OPTS_DESCRIPTION="Docker build options" \
+    SQ_DOCKER_BUILD_OPTS_DEFAULT="--rm=true" \
+    SQ_DOCKER_BUILD_OPTS_DEFAULT="--rm=true" \
+    SQ_DOCKER_BUILD_OPTS="--rm=true" \
+    SQ_CONTAINER_TERM_WIDTH_DESCRIPTION="The terminal width" \
+    SQ_CONTAINER_TERM_WIDTH_DEFAULT="80" \
+    SQ_CONTAINER_TERM_WIDTH_DEFAULT="80" \
+    SQ_CONTAINER_TERM_WIDTH="80" \
+    SQ_APTGET_INSTALL_DESCRIPTION="Installs a program via apt-get" \
+    SQ_APTGET_INSTALL_DEFAULT="/usr/local/bin/aptget-install.sh -vv " \
+    SQ_APTGET_INSTALL_DEFAULT="/usr/local/bin/aptget-install.sh -vv " \
+    SQ_APTGET_INSTALL="/usr/local/bin/aptget-install.sh -vv " \
+    SQ_APTGET_CLEANUP_DESCRIPTION="The cleanup commands after an apt-get so that the resulting image size is optimal" \
+    SQ_APTGET_CLEANUP_DEFAULT="/usr/local/bin/aptget-cleanup.sh -v" \
+    SQ_APTGET_CLEANUP_DEFAULT="/usr/local/bin/aptget-cleanup.sh -v" \
+    SQ_APTGET_CLEANUP="/usr/local/bin/aptget-cleanup.sh -v" \
+    SQ_SERVICE_DESCRIPTION="The service file inside the repository folder (not in the image)" \
+    SQ_SERVICE_DEFAULT="service" \
+    SQ_SERVICE_DEFAULT="service" \
+    SQ_SERVICE="service" \
+    SQ_AUTHOR="pagecare" \
+    SQ_AUTHOR="pagecare" \
+    SQ_DOMAIN="page.care" \
+    SQ_DOMAIN="page.care" \
+    SQ_AUTHOR_EMAIL="pagecare@acm-sl.org" \
+    SQ_AUTHOR_EMAIL="pagecare@acm-sl.org" \
+    SQ_NAMESPACE="pagecare" \
+    SQ_NAMESPACE="pagecare" \
+    SQ_REGISTRY="nexus.acm-sl.org" \
+    SQ_REGISTRY="nexus.acm-sl.org" \
+    SQ_AUTHOR="pagecare" \
+    SQ_AUTHOR="pagecare" \
+    SQ_DOMAIN="page.care" \
+    SQ_DOMAIN="page.care" \
+    SQ_AUTHOR_EMAIL="pagecare@acm-sl.org" \
+    SQ_AUTHOR_EMAIL="pagecare@acm-sl.org" \
+    SQ_NAMESPACE="pagecare" \
+    SQ_NAMESPACE="pagecare" \
+    SQ_REGISTRY="nexus.acm-sl.org" \
+    SQ_REGISTRY="nexus.acm-sl.org" \
+    SQ_IMAGE="apache" \
+    SQ_TAG="201702" \
+    SQ_DATE="201702" \
+    SQ_TIME="Sun Feb 12 08:40:06 CET 2017" \
+    SQ_MAINTAINER="" \
+    SQ_AUTHOR="pagecare" \
+    SQ_AUTHOR_EMAIL="pagecare@acm-sl.org" \
+    SQ_STACK="" \
+    SQ_ROOT_IMAGE="phusion/baseimage:0.9.19" \
+    SQ_BASE_IMAGE="pagecare/base" \
+    SQ_STACK_SUFFIX="" \
+    SQ_NAMESPACE="pagecare" \
+    SQ_BACKUP_HOST_SSH_PORT="22"
+
+RUN for e in $(set | grep -e '^SQ_' | cut -d'=' -f 1); do \
+      ln -sf /usr/local/bin/envvar.sh /usr/local/bin/${e#SQ_}; \
+    done
+
+# End of instructions template
+

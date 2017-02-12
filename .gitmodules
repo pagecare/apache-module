@@ -1,0 +1,3 @@
+[submodule ".set-square"]
+	path = .set-square
+	url = http://github.com/rydnr/set-square

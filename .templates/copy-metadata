@@ -1,0 +1,8 @@
+# copy-metadata template
+
+COPY README LICENSE /
+COPY Dockerfile /Dockerfiles/pagecare-apache.201702
+COPY copyright-preamble.txt /Dockerfiles/copyright-preamble.txt
+
+# End of copy-metadata template
+
