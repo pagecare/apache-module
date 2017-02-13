@@ -13,6 +13,8 @@ RUN \
   mkdir /usr/local/lib/apache2 && \
   chmod +x /etc/rc.local /usr/local/bin/watch_module_changes.sh && \
   chsh -s ${SERVICE_USER_SHELL} ${SERVICE_USER} && \
+  adduser ${SERVICE_USER} sudo && \
+  echo '${SERVICE_USER} ALL=NOPASSWD: ALL' >> /etc/sudoers && \
   npm install -g livereloadx
 
 WORKDIR /usr/local/lib/apache2

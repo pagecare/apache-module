@@ -41,6 +41,6 @@ static int learn_handler(request_rec *r)
     if (!r->handler || strcmp(r->handler, "learn")) return (DECLINED);
 
     // The first thing we will do is write a simple "Hello, world!" back to the client.
-    ap_rputs("Hello, world! (updated 10)", r);
+    ap_rputs("Hello, world! (updated 13)", r);
     return OK;
 }
