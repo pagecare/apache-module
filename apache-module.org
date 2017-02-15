@@ -20,10 +20,10 @@ through host volumes.
 We'll extend our =base= image as usual,
 and start with a simple /apache/Dockerfile.template/:
 
-#+name: dockerfile-1
-#+BEGIN_SRC shell
-FROM pagecare/base:latest
-MAINTAINER ${MAINTAINER}
+#+name: dockerfil...... . . .  ... .
+#+BEGIN_SRC shell--.------
+FROM pagecare/base:latest             .
+MAINTAINER ${MAINTAINER}              .
 
 RUN \
   ${APTGET_INSTALL} -u apache && \
@@ -36,11 +36,11 @@ EXPOSE 80
 @include("instructions")
 #+END_SRC
 
-We're using [[http://github.com/rydnr/set-square][set-square]] to build our images, so, among other things (providing 
-information about the maintainer and so on),  we need to include a
-=README= file to help users find out how to run our image.
+We're using [[http://github.co./rydnr/set-square][set-square]] to build our images, so, among other things (providing
+information about the maintain.r and so on),  we need to include a
+=README= file to help users fi.. out how to run our image.
 
-#+name: readme-1
+#+name: readme-1               ..
 #+BEGIN_SRC shell
 = PageCare Apache module
 
@@ -226,9 +226,9 @@ it refuses to start.
 > docker exec -it [container-id] /bin/bash
 root@[container-id]:/# /etc/init.d/apache2 status
  * apache2 is not running
-root@[container-id]:/# /etc/init.d/apache2 start 
+root@[container-id]:/# /etc/init.d/apache2 start
  * Starting web server apache2
- * 
+ *
  * The apache2 configtest failed.
 Output of config test was:
 apache2: Syntax error on line 140 of /etc/apache2/apache2.conf: \
@@ -283,7 +283,7 @@ module AP_MODULE_DECLARE_DATA learn_module =
 };
 
 /* register_hooks: Adds a hook to the httpd process */
-static void register_hooks(apr_pool_t *pool) 
+static void register_hooks(apr_pool_t *pool)
 {
     /* Hook the request handler */
     ap_hook_handler(learn_handler, NULL, NULL, APR_HOOK_LAST);
@@ -299,7 +299,7 @@ static int learn_handler(request_rec *r)
      * and Apache will try somewhere else.
      */
     if (!r->handler || strcmp(r->handler, "learn")) return (DECLINED);
-    
+
     // The first thing we will do is write a simple "Hello, world!" back to the client.
     ap_rputs("Hello, world!", r);
     return OK;
@@ -311,7 +311,7 @@ However, it doesn't compile:
 #+name: run-apxs-1
 #+BEGIN_SRC shell
 docker run -it --rm --entrypoint=/bin/bash -v workspace:/usr/local/lib/apache2 pagecare/apache
-$ apxs -i -a -c mod_learn.c 
+$ apxs -i -a -c mod_learn.c
 Use of uninitialized value $ENV{"LDFLAGS"} in concatenation (.) or string at /usr/bin/apxs line 423.
 /usr/share/build-1/libtool --silent --mode=compile x86_64-pc-linux-gnu-gcc -prefer-pic \
  -march=native -O2 -pipe -mmmx -msse -msse2 -mssse3 -msse4.1 -msse4.2  -DLINUX \
@@ -370,7 +370,7 @@ which is not what we need.
 
 #+name: apxs-run-2
 #+BEGIN_SRC shell
-> apxs -i -a -c mod_learn.c 
+> apxs -i -a -c mod_learn.c
 Use of uninitialized value $ENV{"LDFLAGS"} in concatenation (.) \
 or string at /usr/bin/apxs line 423.
 /usr/share/build-1/libtool --silent --mode=compile x86_64-pc-linux-gnu-gcc \
@@ -420,46 +420,46 @@ Anyway, here are the required changes:
 - =rules.mk=
 #+name: diff-1
 #+BEGIN_SRC diff-rulesmk
-19c19                
+19c19
 < include  $(top_builddir)/config_vars.mk
----                  
+---
 > include  $(top_builddir)/build/config_vars.mk
 #+END_SRC
 - =instdso.sh=: copy it from =/usr/lib64/apache2/build=.
 - =config_vars.mk=
 #+name: diff-config_varsmk
 #+BEGIN_SRC diff
-5,6c5                
+5,6c5
 < #exp_libexecdir = /usr/lib64/apache2/modules
-< exp_libexecdir = . 
----                  
+< exp_libexecdir = .
+---
 > exp_libexecdir = /usr/lib64/apache2/modules
-10,11c9              
+10,11c9
 < #exp_installbuilddir = /usr/lib64/apache2/build
 < exp_installbuilddir = .
----                  
+---
 > exp_installbuilddir = /usr/lib64/apache2/build
-45,46c43             
+45,46c43
 < #libexecdir = /usr/lib64/apache2/modules
 < libexecdir = [our-working-directory]
----                  
+---
 > libexecdir = /usr/lib64/apache2/modules
-53,54c50             
+53,54c50
 < #installbuilddir = /usr/lib64/apache2/build
 < installbuilddir = .
----                  
+---
 > installbuilddir = /usr/lib64/apache2/build
 #+END_SRC
 - =special.mk=
 #+name: diff-specialmk
 #+BEGIN_SRC diff
-27c27                
+27c27
 < include $(top_builddir)/rules.mk
----                  
+---
 > include $(top_builddir)/build/rules.mk
-32c32                
+32c32
 <         $(top_srcdir)/instdso.sh SH_LIBTOOL='$(SH_LIBTOOL)' $$i $(DESTDIR)$(libexecdir); \
----                  
+---
 >         $(top_srcdir)/build/instdso.sh SH_LIBTOOL='$(SH_LIBTOOL)' $$i $(DESTDIR)$(libexecdir); \
 #+END_SRC
 
@@ -476,7 +476,7 @@ However, our Docker container doesn't accept it.
 #+BEGIN_SRC shell
 root@[container-id]:/# /etc/init.d/apache2 start
  * Starting web server apache2
- * 
+ *
  * The apache2 configtest failed.
 Output of config test was:
 apache2: Syntax error on line 140 of /etc/apache2/apache2.conf: \
@@ -645,6 +645,11 @@ to our =rc.local= script.
 To avoid messing up file permissions in =/usr/local/lib/apache2/=, we'll use
 =run-as.sh= script. We need also to include the /service_user/ template and the
 =build-settings.sh= file.
+We're changing the shell of /www-data/ since it's the user Apache runs as, and
+we need it to be able to run /sudo/ commands. It's not a typical use-case, but
+it fits our purposes. Keep in mind this is a Docker image used only for developing
+Apache modules.
+
 #+name: build-settings-1
 #+BEGIN_SRC shell
 defineEnvVar SERVICE_USER "The service user" "www-data";
@@ -652,6 +657,11 @@ defineEnvVar SERVICE_GROUP "The service group" "www-data";
 defineEnvVar SERVICE_USER_SHELL "The shell of the service account" "/bin/bash";
 defineEnvVar SERVICE_USER_HOME "The home of the service account" "/var/www/";
 #+END_SRC
+
+I'm using =run-as.sh= to avoid messing up the permissions of the folders that
+get shared as host volumes. It changes the /id/ of the user so that it matches
+the /id/ of the owner of the folder, and thus all permissions work just fine
+inside and outside the container.
 
 #+name: rclocal-3
 #+BEGIN_SRC shell
@@ -782,6 +792,12 @@ and setup a new reload rule:
 - File: *[module-folder]/mod\textunderscore{}learn.c*
 - Execute action: *Force reload document*
 
+We can now run our Apache container with:
+#+name: docker-run-1
+#+BEGIN_SRC shell
+docker run -it --rm -p 8888:80 -p 35729:35729 -v ${PWD}/workspace:/usr/local/lib/apache2 pagecare/apache
+#+END_SRC
+
 ** Learning about Apache modules
 
 Now that we have a proper environment,
@@ -793,11 +809,11 @@ we have access to.
 
 #+name: apache-config-1
 #+BEGIN_SRC shell
-/* 
+/*
   mod_learn.c -- Apache sample learn module
   [Autogenerated via ``apxs -n learn -g'']
   To play with this sample module first compile it into a
-  DSO file and install it into Apache's modules directory 
+  DSO file and install it into Apache's modules directory
   by running:
     $ apxs -c -i mod_learn.c
   Then activate it in Apache's apache2.conf file for instance
@@ -811,7 +827,7 @@ we have access to.
     $ apachectl restart
   you immediately can request the URL /learn and watch for the
   output of this module. This can be achieved for instance via:
-    $ lynx -mime_header http://localhost/learn 
+    $ lynx -mime_header http://localhost/learn
   The output should be similar to the following one:
     HTTP/1.1 200 OK
     Date: Tue, 31 Mar 1998 14:42:22 GMT
@@ -866,21 +882,6 @@ static void print_main(request_rec *r) {
     print_string("r->main", "TODO", r);
 }
 
-static char * itoa(int value) {
-    int LENGTH = (CHAR_BIT * sizeof(int) - 1) / 3 + 2;
-    char result[LENGTH];
-    snprintf(result, LENGTH, "%d", value);
-    return &result;
-}
-
-static void print_int(char *name, int value, request_rec *r) {
-    ap_rputs("<dt>", r);
-    ap_rputs(name, r);
-    ap_rputs("</dt><dd>", r);
-    ap_rputs(itoa(value), r);
-    ap_rputs("</dd>\n", r);
-}
-
 static void print_request_time(request_rec *r) {
     print_string("r->request_time", "TODO", r);
 }
@@ -891,10 +892,12 @@ static int learn_handler(request_rec *r)
         return DECLINED;
     }
 
-    r->content_type = "text/html";      
+    r->content_type = "text/html";
 
     if (!r->header_only) {
-        ap_rputs("<html><head><title>Learn module</title></head><body><dl>\n", r);
+        ap_rputs("<html><head><title>Learn module</title></head><body>", r);
+        ap_rputs("<h1>Learn module</h1>\n", r);
+        ap_rputs("<dl>\n", r);
         print_pool(r);
         print_connection(r);
         print_server(r);
@@ -902,19 +905,12 @@ static int learn_handler(request_rec *r)
         print_prev(r);
         print_main(r);
         print_string("r->the_request", r->the_request, r);
-        print_int("r->assbackwards", r->assbackwards, r);
-        print_int("r->proxyreq", r->proxyreq, r);
-        print_int("r->header_only", r->header_only, r);
-        print_int("r->proto_num", r->proto_num, r);
-        //        print_string("r->handler", r->handler, r);
+        print_string("r->handler", r->handler, r);
         print_string("r->protocol", r->protocol, r);
         print_string("r->hostname", r->hostname, r);
         print_request_time(r);
         print_string("r->status_line", r->status_line, r);
-        print_int("r->status", r->status, r);
-        print_int("r->method_number", r->method_number, r);
         print_string("r->method", r->method, r);
-        //
         print_string("r->range", r->range, r);
         print_string("r->content_type", r->content_type, r);
         print_string("r->content_encoding", r->content_encoding, r);
@@ -941,7 +937,7 @@ static void learn_register_hooks(apr_pool_t *p)
 
 /* Dispatch list for API hooks */
 module AP_MODULE_DECLARE_DATA learn_module = {
-    STANDARD20_MODULE_STUFF, 
+    STANDARD20_MODULE_STUFF,
     NULL,                  /* create per-dir    config structures */
     NULL,                  /* merge  per-dir    config structures */
     NULL,                  /* create per-server config structures */
@@ -950,6 +946,99 @@ module AP_MODULE_DECLARE_DATA learn_module = {
     learn_register_hooks  /* register hooks                      */
 };
 #+END_SRC
+
+* Designing our Apache module
+
+We now have a working environment in which we can start implementing our
+custom Apache module. It's time to think what we're trying to achieve, and
+how to accomplish it once step at a time.
+
+We start by thinking of a web application using Apache as web server (or reverse proxy).
+The details won't be affecting us. We want our module to support any web application
+served by Apache.
+#+name: apache-1
+#+BEGIN_SRC ditaa :eps apache-1.eps :file apache-1.pdf :cmdline -r
++--------------+      +-----------+
+|    Apache    |      |   Target  |
+|              +----->|           |
+|    server    |      |    App    |
++--------------+      +-----------+
+#+END_SRC
+
+With our module in place, the scenario would be different. Our module would act as a /man-in-the-middle/,
+for the target application.
+
+#+name: apache-2
+#+BEGIN_SRC ditaa :eps apache-2.eps :file apache-2.pdf :cmdline -r
++--------------+      +-----------+      +----------+
+|    Apache    |----->|  PageCare |      |  Target  |
+|              |      |           |----->|          |
+|    server    |<-----|   Module  |      |   App    |
++--------------+      +-----------+      +----------+
+#+END_SRC
+
+We want out module to intercept every request, check if that request satisfies some conditions,
+and depending on that let it pass, or provide a response directly ourselves.
+
+Let's first start by copying the =mod_learn= module to =mod_pagecare=,
+and replace all occurrences of /learn/ with /pagecare/.
+
+The PageCare module is now as simple as this:
+#+name: pagecare-module-1
+#+BEGIN_SRC C
+#include "httpd.h"
+#include "http_config.h"
+#include "http_protocol.h"
+#include "ap_config.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+static int pagecare_handler(request_rec *r) {
+    if (strcmp(r->handler, "pagecare")) {
+        return DECLINED;
+    }
+
+    r->content_type = "text/html";
+
+    if (!r->header_only) {
+        ap_rputs("<html><head><title>PageCare module</title></head><body>\n", r);
+        ap_rputs("<h1>Intercepted!</h1>", r);
+        ap_rputs("</body></html>\n", r);
+    }
+    return OK;
+}
+
+static void pagecare_register_hooks(apr_pool_t *p) {
+    ap_hook_handler(pagecare_handler, NULL, NULL, APR_HOOK_MIDDLE);
+}
+
+/* Dispatch list for API hooks */
+module AP_MODULE_DECLARE_DATA pagecare_module = {
+    STANDARD20_MODULE_STUFF,
+    NULL,                    /* create per-dir    config structures */
+    NULL,                    /* merge  per-dir    config structures */
+    NULL,                    /* create per-server config structures */
+    NULL,                    /* merge  per-server config structures */
+    NULL,                    /* table of config file commands       */
+    pagecare_register_hooks  /* register hooks                      */
+};
+#+END_SRC
+
+** Match every request
+
+Let's configure our module to match all requests.
+
+#+name: dev2.1a
+#+BEGIN_SRC shell
+<IfModule mod_pagecare.c>
+  <LocationMatch "/*">
+    SetHandler pagecare
+  </LocationMatch>
+</IfModule>
+#+END_SRC
+
+Running our Docker image as usual yields the expected results.
 
 * Troubleshooting
 ** The Docker container does not start
@@ -975,4 +1064,5 @@ Things to check:
 - The module is enabled (=mod2enmod [module]=).
 - The module's =[module].load= file exists in your working directory,
 and its contents point to =/usr/lib/apache2/modules/[module].so=.
+
 

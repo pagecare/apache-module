@@ -1,0 +1,1 @@
+LoadModule pagecare_module /usr/local/lib/apache2/pagecare/mod_pagecare.so

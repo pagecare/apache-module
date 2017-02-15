@@ -11,7 +11,7 @@ for d in $(find /usr/local/lib/apache2/ -maxdepth 1 -type d | grep -v -e '^/usr/
     # but it makes easier to find out
     # which folder is being monitored
     # when inspecting processes via ps -ef
-    /usr/local/bin/run-as.sh -U www-data -G www-data /usr/local/lib/apache2 -- /usr/local/bin/watch_module_changes.sh ${f} ${d} &
+    /usr/local/bin/run-as.sh -vv -U www-data -G www-data /usr/local/lib/apache2 -- /usr/local/bin/watch_module_changes.sh ${f} ${d} &
   done
   a2enmod $(basename ${d});
 done
